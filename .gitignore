@@ -1,4 +1,4 @@
-
+**/__pycache__/
 **/.ipynb_checkpoints/
 *.csv
 *.mseed
@@ -6,3 +6,4 @@
 *.txt
 *.pdf
 *.pickle
+*.xml
