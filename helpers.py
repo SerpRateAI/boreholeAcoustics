@@ -1,6 +1,7 @@
 
 import obspy
 import io
+import pandas as pd
 
 def get_stream_subsample_between_dates(path, startdate, enddate):
     """
@@ -49,3 +50,33 @@ def get_stream_subsample_between_dates(path, startdate, enddate):
                     else:
                         st = st + st_new
     return st
+
+def import_detections(filedir):
+    """
+    Builds a pandas dataframe out of the files found in the 
+    directory provided to the function.
+    
+    Detections are built from the cross correlation template
+    matching function. See template_match_B00.py for example
+    
+    Returns:
+    df : pandas.DataFrame
+    """
+    import glob
+    filepaths = glob.glob(filedir)
+    df = pd.DataFrame()
+    for f in filepaths:
+        # TODO : you can rewrite this as if statement to check
+        #        if there is a dataframe with zero rows. 
+        #        probably will be less computationally intense
+        #        if that ever becomes an issue. Also, it would
+        #        be much more explicit in what is happening
+        try:
+            df = pd.concat([df, pd.read_csv(f)])
+        except:
+            # this exception handles the case when there is no
+            # data in the read in dataframe due to no
+            # detections being made
+            pass
+        
+    return df
