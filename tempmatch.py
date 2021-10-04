@@ -17,42 +17,55 @@ import glob
 
 def digest_data(filedir):
     stream = obspy.read(filedir)
+    stream.merge()
     stream.detrend('demean')
     stream.normalize()
     stream[0].data = filter.highpass(stream[0].data, freq=40, df=1000)
-    stream[0].data = filter.lowpass(stream[0].data, freq=5, df=1000)
+#     stream[0].data = filter.lowpass(stream[0].data, freq=5, df=1000)
+#     stream[0].data = filter.lowpass(stream[0].data, freq=40, df=1000)
+#     stream[0].data = filter.highpass(stream[0].data, freq=5, df=1000)
     return stream
 
-def make_template():
-    template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.138'
-    template = digest_data(template_dir)
-    pick = UTC('2019-05-18T11:57:41.532000Z')
-    template = template.trim(pick-0.025, pick+0.25)
-    return template
-
-def make_template_1():
-    template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
-    template = digest_data(template_dir)
-    pick1 = UTC('2019-10-01T12:32:11.92Z')
-    pick2 = UTC('2019-10-01T12:32:12.13Z')
+def make_template(templatedir, starttime, endtime):
+    template = digest_data(templatedir)
+    pick1 = UTC(starttime)
+    pick2 = UTC(endtime)
     template = template.trim(pick1, pick2)
     return template
 
-def make_template_2():
-    template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
-    template = digest_data(template_dir)
-    pick1 = UTC('2019-05-18T12:03:10.30Z')
-    pick2 = UTC('2019-05-18T12:03:10.50Z')
-    template = template.trim(pick1, pick2)
-    return template
+def find_templates_in_data():
+    pass
 
-def make_template_3():
-    template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
-    template = digest_data(template_dir)
-    pick1 = UTC('2019-05-18T12:06:05.055Z')
-    pick2 = UTC('2019-05-18T12:06:05.20Z')
-    template = template.trim(pick1, pick2)
-    return template
+# def make_template():
+#     template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.138'
+#     template = digest_data(template_dir)
+#     pick = UTC('2019-05-18T11:57:41.532000Z')
+#     template = template.trim(pick-0.025, pick+0.25)
+#     return template
+
+# def make_template_1():
+#     template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
+#     template = digest_data(template_dir)
+#     pick1 = UTC('2019-10-01T12:32:11.92Z')
+#     pick2 = UTC('2019-10-01T12:32:12.13Z')
+#     template = template.trim(pick1, pick2)
+#     return template
+
+# def make_template_2():
+#     template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
+#     template = digest_data(template_dir)
+#     pick1 = UTC('2019-05-18T12:03:10.30Z')
+#     pick2 = UTC('2019-05-18T12:03:10.50Z')
+#     template = template.trim(pick1, pick2)
+#     return template
+
+# def make_template_3():
+#     template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.274'
+#     template = digest_data(template_dir)
+#     pick1 = UTC('2019-05-18T12:06:05.055Z')
+#     pick2 = UTC('2019-05-18T12:06:05.20Z')
+#     template = template.trim(pick1, pick2)
+#     return template
 
 def find_template_in_data(datadir):
     day = datadir.split('.')[-1]
