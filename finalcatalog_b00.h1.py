@@ -28,7 +28,10 @@ def find_template_in_data(datadir):
     print('finding template for day', day)
     data = tm.digest_data(datadir)
 
-    height = 0.875
+#     height = 0.875
+    # i have increased the height to 0.92 because below that it picks up tiny signals that we define as possible electrical noise
+    # all the events below 0.92 similarity in this run are happening simultaneously on all hydrophones
+    height = 0.92
     distance = 1.1
     
 #     templates = [

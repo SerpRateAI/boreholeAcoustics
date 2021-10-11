@@ -17,7 +17,9 @@ import glob
 
 def digest_data(filedir):
     stream = obspy.read(filedir)
-    stream.merge()
+    # some traces have overlapping data, we remove this and fill it with most recent
+    # data
+    stream.merge(fill_value='latest')
     stream.detrend('demean')
     stream.normalize()
     stream[0].data = filter.highpass(stream[0].data, freq=40, df=1000)
@@ -33,8 +35,8 @@ def make_template(templatedir, starttime, endtime):
     template = template.trim(pick1, pick2)
     return template
 
-def find_templates_in_data():
-    pass
+# def find_templates_in_data():
+#     pass
 
 # def make_template():
 #     template_dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.138'
