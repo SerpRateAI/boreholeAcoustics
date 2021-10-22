@@ -36,24 +36,52 @@ templates += data.select(id='7F.B00.06.GDH').slice(UTC('2019-05-18T14:36:16.40Z'
 del data
 
 def find_template_in_data(datadir):
-    day = datadir.split('.')[-1]
-    print('finding template for day', day)
-    data = tm.digest_data(datadir)
-
+    # control for if there are multiple traces
+    # or only a single trace
+    if len(datadir)==6:
+        # multiple traces (assuming 6 hydrophones)
+        data = tm.digest_data(datadir[0])
+        for d in datadir[1:]:
+            data += tm.digest_data(d)
+        
+        # flip the signal on hydrophone 4 because the leads were installed incorrectly
+        data[3].data = data[3].data * -1
+        
+        day = datadir[0].split('.')[-1]
+        year = datadir[0].split('.')[-2]
+        
+    else:
+        # single trace
+        tm.digest_data(datadir)
+        day = datadir.split('.')[-1]
+        year = datadir[0].split('.')[-2]
+        
+    print('finding events for {y}.{d}'.format(y=year, d=day))
+        
     height = 0.8
     distance = 1.1
     
-    detections, sims = correlation_detector(stream=data
+    detections, sims = correlation_detector(
+                                    stream=data
                                     , templates=templates
                                     , heights=height
                                     , distance=distance
-                                    , plot=None)
+                                    , plot=None
+                                    # , similarity_func=tm.simf
+                                           )
+    
     data_writing_location = '/media/sda/data/borehole/detections/' + day
-    try:
-        sims[0].write(data_writing_location + 'similarity.mseed', format='MSEED')
-    except AttributeError:
-        print('there is an error writing similarity for day', str(day))
+    
+    ####
+    #### I have removed this because I feel like it takes up a lot of time
+    ####
+    # try:
+    #     sims[0].write(data_writing_location + 'similarity.mseed', format='MSEED')
+    # except AttributeError:
+    #     print('there is an error writing similarity for day', str(day))
+        
     df = pd.DataFrame(detections)
+    print('detected {n} events on day {y}.{d}'.format(n=df.shape[0], d=day, y=year))
     df.to_csv(data_writing_location + 'detections.csv', index=False)
     del detections, sims, df, data
 
@@ -61,12 +89,38 @@ if __name__=='__main__':
     start = datetime.now()
     print('process started at', str(start))
     
-    datafiles2019 = glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.*')
-    datafiles2020 = glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2020.*')
-    datafiles = datafiles2019 + datafiles2020
+    datafiles = []
+    
+    # days = np.unique(
+    #             np.array(
+    #                 [d.split('.')[-1] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
+    #                     )
+    #                 )
+    # years = 
+    
+    years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
+    years_days = np.array([list(x) for x in set(tuple(x) for x in years_days)])
+    
+#     for y in [2019, 2020]:
+#         # for d in np.arange(1, 366, 1):
+#         for d in days:
+#             day_dirs = []
+#             for s in [1,2,3,4,5,6]:
+#                 dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
+#                 day_dirs.append(dir)
+                
+#             datafiles.append(day_dirs)
 
-    # create a processor pool to ingest the data, by default uses all processors
-    pool = Pool()
+    for y, d in years_days:
+        day_dirs = []
+        for s in [1,2,3,4,5,6]:
+            dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
+            day_dirs.append(dir)
+        datafiles.append(day_dirs)
+                
+
+    # create a processor pool to ingest the data, by default uses all processors, we use 10 here
+    pool = Pool(10)
     pool.map(find_template_in_data, datafiles)
     pool.close()
     print('process finished at', datetime.now()-start)
