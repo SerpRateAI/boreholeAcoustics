@@ -71,15 +71,7 @@ def find_template_in_data(datadir):
                                            )
     
     data_writing_location = '/media/sda/data/borehole/detections/' + day
-    
-    ####
-    #### I have removed this because I feel like it takes up a lot of time
-    ####
-    # try:
-    #     sims[0].write(data_writing_location + 'similarity.mseed', format='MSEED')
-    # except AttributeError:
-    #     print('there is an error writing similarity for day', str(day))
-        
+      
     df = pd.DataFrame(detections)
     print('detected {n} events on day {y}.{d}'.format(n=df.shape[0], d=day, y=year))
     df.to_csv(data_writing_location + 'detections.csv', index=False)
@@ -91,33 +83,17 @@ if __name__=='__main__':
     
     datafiles = []
     
-    # days = np.unique(
-    #             np.array(
-    #                 [d.split('.')[-1] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
-    #                     )
-    #                 )
-    # years = 
     
     years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
     years_days = np.array([list(x) for x in set(tuple(x) for x in years_days)])
     
-#     for y in [2019, 2020]:
-#         # for d in np.arange(1, 366, 1):
-#         for d in days:
-#             day_dirs = []
-#             for s in [1,2,3,4,5,6]:
-#                 dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
-#                 day_dirs.append(dir)
-                
-#             datafiles.append(day_dirs)
 
     for y, d in years_days:
         day_dirs = []
         for s in [1,2,3,4,5,6]:
             dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
             day_dirs.append(dir)
-        datafiles.append(day_dirs)
-                
+        datafiles.append(day_dirs)                
 
     # create a processor pool to ingest the data, by default uses all processors, we use 10 here
     pool = Pool(10)
