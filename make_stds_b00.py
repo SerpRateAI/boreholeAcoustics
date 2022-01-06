@@ -6,6 +6,9 @@ import numpy as np
 import obspy
 import glob
 from datetime import datetime
+from multiprocessing import Pool
+
+start = datetime.now()
 
 def get_stream(paths):
     """
@@ -28,7 +31,7 @@ def get_std(stream, length_step):
         dfwindow = pd.DataFrame(window.std()).transpose()
         dfwindow.index = (window[0].stats['starttime'],)
         dfstd = pd.concat([dfstd, dfwindow])
-    dfstd.columns = ['h0', 'h1', 'h2', 'h3', 'h4', 'h5']
+    # dfstd.columns = ['h0', 'h1', 'h2', 'h3', 'h4', 'h5']
     return dfstd
 
 def get_std_for_one_day(dataloc):
@@ -36,15 +39,18 @@ def get_std_for_one_day(dataloc):
     wrapper function for get_stream and get_std that writes to file the standard deviation
     calculated curves for a single day.
     """
-    day = dataloc.split('.')[-1]
-    year = dataloc.split('.')[-2]
+    day = dataloc[0].split('.')[-1]
+    year = dataloc[0].split('.')[-2]
     stream = get_stream(paths=dataloc)
     stream.filter(freqmin=6.0, freqmax=8.0, type='bandpass')
-    std = get_std(s, length_step=60.0)
+    std = get_std(stream, length_step=60.0)
     std['day'] = day
     std['year'] = year
-    std.to_csv('/media/sda/data/robdata/stds/std_{year}_{day}.csv', index=True)
-    del day, year, stream, std
+    csv_loc = '/media/sda/data/robdata/stds/std_{year}_{day}.csv'.format(year=year, day=day)
+    std.to_csv(csv_loc, index=True)
+    print('writing', csv_loc, 'to file')
+    print('elapsed time:', str(datetime.now() - start))
+    del day, year, stream, std, csv_loc
 
 def create_datafiles():
     """
@@ -63,7 +69,7 @@ def create_datafiles():
     return datafiles
 
 if __name__=='__main__':
-    start = datetime.now()
+    # start = datetime.now()
     print('process started at', str(start))
     
     datafiles = create_datafiles()
