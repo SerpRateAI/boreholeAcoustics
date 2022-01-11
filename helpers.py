@@ -112,7 +112,7 @@ def get_stream(paths):
     stream[3].data = -1 * stream[3].data
     return stream
 
-def import_raw_data_for_single_day(julian_day, year, borehold='B'):
+def import_raw_data_for_single_day(julian_day, year, borehole='B'):
     """
     Imports data for all 6 hydrophones for specific day
     """
