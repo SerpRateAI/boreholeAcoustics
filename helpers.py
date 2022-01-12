@@ -99,18 +99,49 @@ def import_detections(filedir):
         
     return df
 
-def get_stream(paths):
+def get_raw_stream(paths):
     """
-    opens the data as an obspy stream from the given list of paths
+    returns raw data with no conversions
     """
     stream = obspy.read(paths[0])
     for p in paths[1:]:
-        stream = stream + obspy.read(p)  
-    
-    # some days there is multiple files for one day these need to be combined
+        stream = stream + obspy.read(p)
     stream.merge(fill_value='latest')
+    return stream
+
+def correct_hydrophone_B_wiring_problem(stream):
+    """
+    Hole B has a reversed wiring issue where hydrophone 4 (index 3)
+    has the wires installed backwards which flips the signal. THis
+    function corrects that.
+    """
     stream[3].data = -1 * stream[3].data
     return stream
+
+def convert_stream_to_pascals(stream):
+    """
+    converts hydrophone data to pascals
+    % convert digital counts to Pa
+    % Q330S+ has 419430 counts/volt
+    % hydrophone sensitivity is -165 dB, re: 1V/uPa
+    % or p in uPa = V/10^-16.5
+    """
+    for n, tr in enumerate(stream):
+        stream[n].data = tr.data/419430. # converts to volts
+        stream[n].data = tr.data/(10**(-165/20.)) # converts to microPascals
+        stream[n].data = tr.data/1e6 # converts to Pascals
+        
+    return stream
+    
+
+#     p=data/419430; % now in volts
+#     p=p/10^(-165/20); % now in uPa
+#     p=p/1e06; % now in Pa
+    # for n, tr in enumerate(stream):
+    #     stream[n].data = tr.data/419430.0 # converts to volts
+    #     stream[n].data = tr.data**(-165/20) # converts to microPascal
+    #     stream[n].data = tr.data/1e6 # now in pascals
+    # return stream
 
 def import_raw_data_for_single_day(julian_day, year, borehole='B'):
     """
@@ -124,7 +155,11 @@ def import_raw_data_for_single_day(julian_day, year, borehole='B'):
         dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=year, d=julian_day)
         file_locs.append(dir)
     
-    return get_stream(file_locs)
+    # return get_stream(file_locs)
+    stream = get_raw_stream(file_locs)
+    stream = correct_hydrophone_B_wiring_problem(stream)
+    stream = convert_stream_to_pascals(stream)
+    return stream
         
     
 def read_csvs_convert_to_dataframe(csv_paths):
