@@ -7,7 +7,8 @@ import numpy as np
 
 def create_datafiles():
     """
-    creates a list of lists of datafiles, there are 6 files per day for each of 6 hydrophones
+    creates a list of lists of datafiles, there are 6 files
+    per day for each of 6 hydrophones
     """
     datafiles = []
     years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
@@ -132,16 +133,6 @@ def convert_stream_to_pascals(stream):
         stream[n].data = tr.data/1e6 # converts to Pascals
         
     return stream
-    
-
-#     p=data/419430; % now in volts
-#     p=p/10^(-165/20); % now in uPa
-#     p=p/1e06; % now in Pa
-    # for n, tr in enumerate(stream):
-    #     stream[n].data = tr.data/419430.0 # converts to volts
-    #     stream[n].data = tr.data**(-165/20) # converts to microPascal
-    #     stream[n].data = tr.data/1e6 # now in pascals
-    # return stream
 
 def import_raw_data_for_single_day(julian_day, year, borehole='B'):
     """
