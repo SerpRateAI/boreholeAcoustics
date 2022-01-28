@@ -11,22 +11,27 @@ import io
 import pandas as pd
 import glob
 import numpy as np
-# from hydrophone_data_processing import preprocessing
-import preprocessing
+from hydrophone_data_processing import preprocessing
+# import preprocessing
 
-def create_datafiles():
+# def create_datafiles():
+def create_datafiles(hole):
+    # TODO : make work for hole a or b
     """
     creates a list of lists of datafiles, there are 6 files
     per day for each of 6 hydrophones
     """
     datafiles = []
-    years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
+    dataloc = '/media/sda/data/robdata/Hydrophones/DAYS/{}00/*'.format(hole)
+    # years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
+    years_days = [d.split('.')[-2:] for d in glob.glob(dataloc)]
     years_days = np.array([list(x) for x in set(tuple(x) for x in years_days)])
     
     for y, d in years_days:
         day_dirs = []
         for s in [1,2,3,4,5,6]:
-            dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
+            # dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
+            dir = '/media/sda/data/robdata/Hydrophones/DAYS/{h}00/{h}00.7F.0{s}.GDH.{y}.{d}'.format(h=hole, s=s, y=y, d=d)
             day_dirs.append(dir)
         datafiles.append(day_dirs)  
     return datafiles
@@ -101,13 +106,24 @@ def import_detections(filedir):
         #        be much more explicit in what is happening
         try:
             df = pd.concat([df, pd.read_csv(f)])
-        except:
+        except pd.errors.EmptyDataError:
             # this exception handles the case when there is no
             # data in the read in dataframe due to no
             # detections being made
             pass
         
     return df
+
+def import_bubble_detections(filedir):
+    """
+    wrapper function for adding columns to bubble detections
+    """
+    bubbles = import_detections(filedir)
+    bubbles.sort_values(by='time', inplace=True)
+    bubbles['ones'] = 1
+    bubbles['time'] = pd.to_datetime(bubbles.time.astype(str))
+    bubbles.set_index('time', inplace=True)
+    return bubbles
 
 def get_raw_stream(paths):
     """
@@ -119,21 +135,30 @@ def get_raw_stream(paths):
     stream.merge(fill_value='latest')
     return stream
 
-def import_corrected_data_for_single_day(julian_day, year, borehole='B'):
+# def import_corrected_data_for_single_day(julian_day, year, borehole='B'):
+def import_corrected_data_for_single_day(paths):
     """
     Imports data for all 6 hydrophones for specific day
+    
+    returns a single stream that has corrected:
+    
+    1. the wiring problem for hydrophone 4 on hole B
+    2. converts all data to Pascals
     """
-    if borehole.upper() not in ['A', 'B']:
-        raise ValueError('borehole should be A or B')
+    borehole, network, station, devicetype, year, julian_day = paths[0].split('/')[-1].split('.')
+    # if borehole[0].upper() not in ['A', 'B']:
+    #     raise ValueError('borehole should be A or B')
     
     file_locs = []
     for s in [1, 2, 3, 4, 5, 6]:
-        dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=year, d=julian_day)
+        # dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=year, d=julian_day)
+        dir = '/media/sda/data/robdata/Hydrophones/DAYS/{b}/{b}.{n}.0{s}.{dt}.{y}.{d}'.format(b=borehole, n=network, s=s, dt=devicetype, y=year, d=julian_day)
         file_locs.append(dir)
     
-    # return get_stream(file_locs)
     stream = get_raw_stream(file_locs)
-    stream = preprocessing.correct_hydrophone_B_wiring_problem(stream)
+    if borehole == 'B00':
+        # print(stream)
+        stream = preprocessing.correct_hydrophone_B_wiring_problem(stream)
     stream = preprocessing.convert_stream_to_pascals(stream)
     return stream
 
@@ -151,5 +176,14 @@ def read_csvs_convert_to_dataframe(csv_paths):
         
     return df
 
+def control_for_bad_hole_labels(hole_label):
+    hole_label = hole_label.upper()
+    if hole_label == 'A':
+        return hole_label
+    elif hole_label == 'B':
+        return hole_label
+    else:
+        raise ValueError('{} is not A or B, please pick A or B'.format(hole_label))
+
 if __name__=='__main__':
-    print('Nothing to see here. You may go about our business.')
+    print('Nothing to see here. You may go about your business.')

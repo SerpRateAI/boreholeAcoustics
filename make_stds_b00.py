@@ -8,21 +8,22 @@ import glob
 from datetime import datetime
 from multiprocessing import Pool
 import helpers
+from hydrophone_data_processing import load, preprocessing
 
 start = datetime.now()
 
-def get_stream(paths):
-    """
-    opens the data as an obspy stream from the given list of paths
-    """
-    stream = obspy.read(paths[0])
-    for p in paths[1:]:
-        stream = stream + obspy.read(p)  
+# def get_stream(paths):
+#     """
+#     opens the data as an obspy stream from the given list of paths
+#     """
+#     stream = obspy.read(paths[0])
+#     for p in paths[1:]:
+#         stream = stream + obspy.read(p)  
     
-    # some days there is multiple files for one day these need to be combined
-    stream.merge(fill_value='latest')
-    stream[3].data = -1 * stream[3].data
-    return stream
+#     # some days there is multiple files for one day these need to be combined
+#     stream.merge(fill_value='latest')
+#     stream[3].data = -1 * stream[3].data
+#     return stream
 
 def get_std(stream, length_step):
     """
@@ -47,13 +48,18 @@ def get_std_for_one_day(dataloc):
     """
     day = dataloc[0].split('.')[-1]
     year = dataloc[0].split('.')[-2]
-    stream = get_stream(paths=dataloc)
+    # stream = get_stream(paths=dataloc)
+    stream = load.import_corrected_data_for_single_day(julian_day=day, year=year, borehole='b')
+    stream.decimate(factor=10)
+    stream.detrend('demean')
     # stream.filter(freqmin=6.0, freqmax=8.0, type='bandpass')
-    stream.filter(freqmin=5.0, freqmax=10.0, type='bandpass')
+    stream.filter(freqmin=5.0, freqmax=10.0, type='bandpass', corners=4, zerophase=True)
+    preprocessing.square_stream(stream=stream)
+    stream.filter(type='lowpass', freq=0.1, zerophase=True)
+    
     std = get_std(stream, length_step=60.0)
     std['day'] = day
-    std['year'] = year
-    
+    std['year'] = year   
     # test to make sure that the dataframe is the right size otherwise throw an error
     assert std.shape[1] == 8, 'There should be 8 columns but there are {c}, see file {d} for more details'.format(c=std.shape[1], d=dataloc)
     
@@ -63,29 +69,13 @@ def get_std_for_one_day(dataloc):
     print('elapsed time:', str(datetime.now() - start))
     del day, year, stream, std, csv_loc
 
-# def create_datafiles():
-#     """
-#     creates a list of lists of datafiles, there are 6 files per day for each of 6 hydrophones
-#     """
-#     datafiles = []
-#     years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
-#     years_days = np.array([list(x) for x in set(tuple(x) for x in years_days)])
-    
-#     for y, d in years_days:
-#         day_dirs = []
-#         for s in [1,2,3,4,5,6]:
-#             dir = '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.0{s}.GDH.{y}.{d}'.format(s=s, y=y, d=d)
-#             day_dirs.append(dir)
-#         datafiles.append(day_dirs)  
-#     return datafiles
 
 if __name__=='__main__':
-    # start = datetime.now()
     print('process started at', str(start))
     
     datafiles = helpers.create_datafiles()
     # create a processor pool to ingest the data, by default uses all processors, we use 10 here
-    pool = Pool()
+    pool = Pool(15)
     pool.map(get_std_for_one_day, datafiles)
     pool.close()
     print('process finished at', datetime.now()-start)
