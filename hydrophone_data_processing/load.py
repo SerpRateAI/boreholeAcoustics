@@ -111,7 +111,7 @@ def import_detections(filedir):
             # data in the read in dataframe due to no
             # detections being made
             pass
-        
+    df['time'] = df['time'].apply(pd.to_datetime)
     return df
 
 def import_bubble_detections(filedir):

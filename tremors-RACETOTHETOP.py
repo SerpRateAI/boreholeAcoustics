@@ -12,13 +12,13 @@ from hydrophone_data_processing import load, preprocessing
 start = datetime.now()
 writing_path = '/media/sda/data/robdata/tremors/RACETOTHETOP/{d}.mseed'
 
-def square_stream(stream):
-    for s in stream:
-        s.data = s.data**2
+# def square_stream(stream):
+#     for s in stream:
+#         s.data = s.data**2
         
-def abs_stream(stream):
-    for s in stream:
-        s.data = np.abs(s.data)
+# def abs_stream(stream):
+#     for s in stream:
+#         s.data = np.abs(s.data)
         
 def convert_paths_to_day_year_borehole(path):
     """
@@ -35,15 +35,16 @@ def convert_paths_to_day_year_borehole(path):
 
 def apply_function_to_single_day(paths):
     # day = helpers.get_stream(paths)
-    julian_day, year, borehole = convert_paths_to_day_year_borehole(path=paths)
-    day = load.import_corrected_data_for_single_day(julian_day, year, borehole='b')
+    # julian_day, year, borehole = convert_paths_to_day_year_borehole(path=paths)
+    # day = load.import_corrected_data_for_single_day(julian_day, year, borehole='b')
+    day = load.import_corrected_data_for_single_day(paths=paths)
     # day.decimate(factor=10)
     # decimate to 500Hz
     day.decimate(factor=2)
     day.detrend('demean')
     day.filter(type='highpass', corners=4, freq=40, zerophase=True)
     # square_stream(day)
-    abs_stream(day)
+    preprocessing.abs_stream(day)
     day.decimate(factor=5)
     # day.filter(type='lowpass', freq=0.01)
     # day.filter(type='lowpass', freq=0.1, zerophase=True, corners=4)

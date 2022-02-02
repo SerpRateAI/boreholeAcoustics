@@ -30,13 +30,15 @@ def convert_trace_to_pascals(trace):
     trace.data = trace.data/419430 # converts to volts
     trace.data = trace.data/(10**(-165/20.)) # converts to microPascals
     trace.data = trace.data/1e6 # converts to pascals
-    return trace
+    # return trace
+    return trace.data
 
 def convert_stream_to_pascals(stream):
     """
     wrapper function to convert an entire stream to pascals
     """
     for n, tr in enumerate(stream):
+        # print(type(tr))
         stream[n].data = convert_trace_to_pascals(tr)
         
     return stream
@@ -62,6 +64,11 @@ def square_stream(stream):
     """
     for s in stream:
         s.data = s.data**2
+        
+        
+def abs_stream(stream):
+    for s in stream:
+        s.data = np.abs(s.data)
         
 def calculate_quiet_noise():
     """
