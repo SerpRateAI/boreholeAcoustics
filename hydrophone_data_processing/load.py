@@ -112,6 +112,7 @@ def import_detections(filedir):
             # detections being made
             pass
     df['time'] = df['time'].apply(pd.to_datetime)
+    df.sort_values(by='time', inplace=True)
     return df
 
 def import_bubble_detections(filedir):
