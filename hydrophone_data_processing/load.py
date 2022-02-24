@@ -21,6 +21,7 @@ def create_datafiles(hole):
     creates a list of lists of datafiles, there are 6 files
     per day for each of 6 hydrophones
     """
+    hole = hole.upper()
     datafiles = []
     dataloc = '/media/sda/data/robdata/Hydrophones/DAYS/{}00/*'.format(hole)
     # years_days = [d.split('.')[-2:] for d in glob.glob('/media/sda/data/robdata/Hydrophones/DAYS/B00/*')]
