@@ -37,7 +37,7 @@ def _make_template_A():
     del stream
     return templates
 
-def _make_template_B():
+def _make_template_B(raw):
     paths = [
         '/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.01.GDH.2019.138'
     ,'/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.02.GDH.2019.138'
@@ -47,7 +47,9 @@ def _make_template_B():
     ,'/media/sda/data/robdata/Hydrophones/DAYS/B00/B00.7F.06.GDH.2019.138'
     ]
     data = load.import_corrected_data_for_single_day(paths=paths)
-    data = digest_data(data)
+    # data = digest_data(data)
+    if raw == False:
+        data = digest_data(data)
     
     templates = data.select(id='7F.B00.01.GDH').slice(obspy.UTCDateTime('2019-05-18T14:36:16.178Z'), obspy.UTCDateTime('2019-05-18T14:36:16.304Z'))
     templates += data.select(id='7F.B00.02.GDH').slice(obspy.UTCDateTime('2019-05-18T14:36:16.22Z'), obspy.UTCDateTime('2019-05-18T14:36:16.35Z'))
@@ -59,14 +61,17 @@ def _make_template_B():
     del data
     return templates
 
-def make_template(hole):
+# def make_template(hole):
+def make_template(hole, raw=False):
     """
     wrapper function for making bubble template for hole A or B
     """
     if hole == 'A':
-        return _make_template_A()
+        # return _make_template_A()
+        return _make_template_A(raw=raw)
     elif hole == 'B':
-        return _make_template_B()
+        # return _make_template_B()
+        return _make_template_B(raw=raw)
     else:
         raise ValueError('These are not the holes you are looking for:', hole)
         
